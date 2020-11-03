@@ -2,24 +2,48 @@ import 'package:flutter/material.dart';
 import 'dart:convert';
 import 'package:http/http.dart' as http;
 
+// Gerado automaticamente
 void main() {
   runApp(CityWeather());
 }
 
+String nomeApp = "Previsão do Tempo";
+var mainColor = Colors.blue;
+
+// Classe principal
 class CityWeather extends StatelessWidget {
   Widget build(BuildContext context) {
-    return MaterialApp(
-        title: 'Previsão do tempo',
-        home: CityWeatherPage(title: 'Previsão do Tempo'));
+    return MaterialApp(title: nomeApp, home: CityWeatherPage(title: nomeApp));
   }
 }
 
+//
 class CityWeatherPage extends StatefulWidget {
   CityWeatherPage({Key key, this.title}) : super(key: key);
 
   final String title;
 
   _CityWeatherPageState createState() => _CityWeatherPageState();
+}
+
+class _CityWeatherPageState extends State<CityWeatherPage> {
+  CityInputText searchCity = CityInputText();
+
+  Widget build(BuildContext context) {
+    return MaterialApp(
+        title: widget.title,
+        theme: ThemeData(
+          primarySwatch: mainColor,
+          visualDensity: VisualDensity.adaptivePlatformDensity,
+        ),
+        home: Scaffold(
+            appBar: AppBar(
+              title: Text(nomeApp),
+            ),
+            body: Column(
+              children: [searchCity],
+            )));
+  }
 }
 
 class CityInputText extends StatefulWidget {
@@ -54,11 +78,7 @@ class _CityInputText extends State<CityInputText> {
   void updateCity(String city, dynamic json, String country) {
     setState(() {
       _city = city + ", " + country;
-      _isVisible = _city.length > 0;
-
-      if (json["temp"] is double) {
-        print("Is Int");
-      }
+      updateVisibility(_city.length > 0);
 
       _temp = roundValue(json["temp"]);
       _feelsLike = roundValue(json["feels_like"]);
@@ -68,8 +88,15 @@ class _CityInputText extends State<CityInputText> {
     });
   }
 
+  void updateVisibility(bool isVisible) {
+    setState(() {
+      _isVisible = isVisible;
+    });
+  }
+
   // realiza fetch na API
   void btnSendCity() async {
+    // TRIM apaga os espaços no começo e no final de uma String
     var city = widget.cityController.text.trim();
     var uri = "http://api.openweathermap.org/data/2.5/weather?q=" +
         city.replaceAll(' ', '+') +
@@ -78,10 +105,12 @@ class _CityInputText extends State<CityInputText> {
         "&units=" +
         units;
 
-    print(uri);
+    // Exibir no console a URI
+    // print(uri);
 
     var response = await http.get(uri);
     if (response.statusCode != 200) {
+      updateVisibility(false);
       return;
     }
 
@@ -106,7 +135,7 @@ class _CityInputText extends State<CityInputText> {
                     suffixIcon: IconButton(
                       icon: Icon(Icons.send),
                       onPressed: btnSendCity,
-                      color: Colors.blue,
+                      color: mainColor,
                     ),
                   ),
                 )),
@@ -123,8 +152,27 @@ class _CityInputText extends State<CityInputText> {
                               child: Text("$_city",
                                   style: TextStyle(
                                       fontWeight: FontWeight.bold,
-                                      fontSize: 24)),
+                                      fontSize: 24,
+                                      color: mainColor)),
                             ))))
+              ],
+            ),
+            Row(
+              children: [
+                Expanded(
+                    child: Container(
+                        padding: EdgeInsets.only(top: 16),
+                        child: Visibility(
+                          visible: _isVisible,
+                          child: Center(child: Text("Min: $_tempMin ºC")),
+                        ))),
+                Expanded(
+                    child: Container(
+                        padding: EdgeInsets.only(top: 16),
+                        child: Visibility(
+                          visible: _isVisible,
+                          child: Center(child: Text("Max: $_tempMax ºC")),
+                        ))),
               ],
             ),
             Row(
@@ -156,53 +204,26 @@ class _CityInputText extends State<CityInputText> {
                         padding: EdgeInsets.only(top: 16),
                         child: Visibility(
                           visible: _isVisible,
-                          child: Text("Temperatura Mínima: $_tempMin ºC"),
-                        ))),
-              ],
-            ),
-            Row(
-              children: [
-                Expanded(
-                    child: Container(
-                        padding: EdgeInsets.only(top: 16),
-                        child: Visibility(
-                          visible: _isVisible,
-                          child: Text("Temperatura máxima: $_tempMax ºC"),
-                        ))),
-              ],
-            ),
-            Row(
-              children: [
-                Expanded(
-                    child: Container(
-                        padding: EdgeInsets.only(top: 16),
-                        child: Visibility(
-                          visible: _isVisible,
                           child: Text("Umidade do ar: $_humidity%"),
+                        ))),
+              ],
+            ),
+            Row(
+              children: [
+                Expanded(
+                    child: Container(
+                        padding: EdgeInsets.only(top: 16),
+                        child: Visibility(
+                          visible: !_isVisible,
+                          child: Center(
+                              child: Text(
+                            "Nome de cidade inválido!",
+                            style: TextStyle(color: Colors.red, fontSize: 25),
+                          )),
                         ))),
               ],
             ),
           ],
         ));
-  }
-}
-
-class _CityWeatherPageState extends State<CityWeatherPage> {
-  CityInputText searchCity = CityInputText();
-
-  Widget build(BuildContext context) {
-    return MaterialApp(
-        title: widget.title,
-        theme: ThemeData(
-          primarySwatch: Colors.blue,
-          visualDensity: VisualDensity.adaptivePlatformDensity,
-        ),
-        home: Scaffold(
-            appBar: AppBar(
-              title: Text('Previsão do Tempo'),
-            ),
-            body: Column(
-              children: [searchCity],
-            )));
   }
 }
