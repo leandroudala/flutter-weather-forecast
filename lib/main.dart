@@ -115,6 +115,7 @@ class _CityInputText extends State<CityInputText> {
     var response = await http.get(uri);
     if (response.statusCode != 200) {
       updateError(true);
+      updateVisibility(false);
       return;
     }
 
