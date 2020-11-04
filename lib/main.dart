@@ -59,7 +59,7 @@ class _CityInputText extends State<CityInputText> {
 
   String _city = '';
   String _temp, _feelsLike, _tempMin, _tempMax, _humidity;
-  var _isVisible = false;
+  var _isVisible = false, _error = false;
 
   void dispose() {
     widget.cityController.dispose();
@@ -94,6 +94,12 @@ class _CityInputText extends State<CityInputText> {
     });
   }
 
+  void updateError(bool isError) {
+    setState(() {
+      _error = isError;
+    });
+  }
+
   // realiza fetch na API
   void btnSendCity() async {
     // TRIM apaga os espaços no começo e no final de uma String
@@ -105,12 +111,10 @@ class _CityInputText extends State<CityInputText> {
         "&units=" +
         units;
 
-    // Exibir no console a URI
-    // print(uri);
-
+    updateError(false);
     var response = await http.get(uri);
     if (response.statusCode != 200) {
-      updateVisibility(false);
+      updateError(true);
       return;
     }
 
@@ -214,7 +218,7 @@ class _CityInputText extends State<CityInputText> {
                     child: Container(
                         padding: EdgeInsets.only(top: 16),
                         child: Visibility(
-                          visible: !_isVisible,
+                          visible: _error,
                           child: Center(
                               child: Text(
                             "Nome de cidade inválido!",
